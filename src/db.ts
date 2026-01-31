@@ -1,11 +1,11 @@
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 import fs from 'fs';
 import path from 'path';
 import { proto } from '@whiskeysockets/baileys';
 import { NewMessage, ScheduledTask, TaskRunLog } from './types.js';
 import { STORE_DIR } from './config.js';
 
-let db: Database.Database;
+let db: Database;
 
 export function initDatabase(): void {
   const dbPath = path.join(STORE_DIR, 'messages.db');

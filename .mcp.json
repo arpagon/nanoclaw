@@ -1,12 +1,12 @@
 {
   "mcpServers": {
     "gmail": {
-      "command": "npx",
-      "args": ["-y", "@gongrzhe/server-gmail-autoauth-mcp"]
+      "command": "bunx",
+      "args": ["--bun", "@gongrzhe/server-gmail-autoauth-mcp"]
     },
     "scheduler": {
-      "command": "npx",
-      "args": ["-y", "schedule-task-mcp"]
+      "command": "bunx",
+      "args": ["--bun", "schedule-task-mcp"]
     }
   }
 }

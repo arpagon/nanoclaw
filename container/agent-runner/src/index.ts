@@ -22,13 +22,7 @@ interface ContainerOutput {
 }
 
 async function readStdin(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', chunk => { data += chunk; });
-    process.stdin.on('end', () => resolve(data));
-    process.stdin.on('error', reject);
-  });
+  return await Bun.stdin.text();
 }
 
 function writeOutput(output: ContainerOutput): void {
@@ -86,7 +80,7 @@ async function main(): Promise<void> {
         settingSources: ['project'],
         mcpServers: {
           nanoclaw: ipcMcp,
-          gmail: { command: 'npx', args: ['-y', '@gongrzhe/server-gmail-autoauth-mcp'] }
+          gmail: { command: 'bunx', args: ['--bun', '@gongrzhe/server-gmail-autoauth-mcp'] }
         }
       }
     })) {

@@ -1,7 +1,7 @@
 # NanoClaw Agent Container
 # Runs Claude Agent SDK in isolated Linux VM with browser automation
 
-FROM node:22-slim
+FROM oven/bun:1-debian
 
 # Install system dependencies for Chromium
 RUN apt-get update && apt-get install -y \
@@ -30,22 +30,21 @@ ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install agent-browser globally
-RUN npm install -g agent-browser
+RUN bun install -g agent-browser
 
 # Create app directory
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY agent-runner/package*.json ./
+COPY agent-runner/package.json agent-runner/bun.lockb* ./
 
 # Install dependencies
-RUN npm install
+RUN bun install
 
 # Copy source code
 COPY agent-runner/ ./
 
-# Build TypeScript
-RUN npm run build
+# No build step - Bun runs TypeScript directly
 
 # Create workspace directories
 RUN mkdir -p /workspace/group /workspace/global /workspace/extra /workspace/ipc/messages /workspace/ipc/tasks
@@ -54,4 +53,4 @@ RUN mkdir -p /workspace/group /workspace/global /workspace/extra /workspace/ipc/
 WORKDIR /workspace/group
 
 # Entry point reads JSON from stdin, outputs JSON to stdout
-ENTRYPOINT ["node", "/app/dist/index.js"]
+ENTRYPOINT ["bun", "run", "/app/src/index.ts"]

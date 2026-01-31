@@ -9,8 +9,22 @@ Run all commands automatically. Only pause when user action is required (scannin
 
 ## 1. Install Dependencies
 
+Check if Bun is installed:
+
 ```bash
-npm install
+which bun && bun --version || echo "Not installed"
+```
+
+If not installed, tell the user:
+> Install Bun from https://bun.sh:
+> ```bash
+> curl -fsSL https://bun.sh/install | bash
+> ```
+
+Then install dependencies:
+
+```bash
+bun install
 ```
 
 ## 2. Install Apple Container
@@ -45,7 +59,7 @@ Build the NanoClaw agent container:
 ./container/build.sh
 ```
 
-This creates the `nanoclaw-agent:latest` image with Node.js, Chromium, and agent-browser.
+This creates the `nanoclaw-agent:latest` image with Bun, Chromium, and agent-browser.
 
 Verify the image was created:
 
@@ -60,7 +74,7 @@ container images | grep nanoclaw-agent || echo "Image not found"
 Run the authentication script:
 
 ```bash
-npm run auth
+bun run auth
 ```
 
 Tell the user:
@@ -96,7 +110,7 @@ For group:
 After user confirms, start the app briefly to capture the message:
 
 ```bash
-timeout 10 npm run dev || true
+timeout 10 bun run dev || true
 ```
 
 Then find the JID from the database:
@@ -148,7 +162,7 @@ If yes, guide them through the prerequisites:
 
 Then run:
 ```bash
-npx -y @gongrzhe/server-gmail-autoauth-mcp
+bunx --bun @gongrzhe/server-gmail-autoauth-mcp
 ```
 
 This will open a browser for OAuth consent. After authorization, credentials are cached.
@@ -158,7 +172,7 @@ This will open a browser for OAuth consent. After authorization, credentials are
 Get the actual paths:
 
 ```bash
-which node
+which bun
 pwd
 ```
 
@@ -173,8 +187,9 @@ Create the plist file at `~/Library/LaunchAgents/com.nanoclaw.plist`:
     <string>com.nanoclaw</string>
     <key>ProgramArguments</key>
     <array>
-        <string>NODE_PATH_HERE</string>
-        <string>PROJECT_PATH_HERE/dist/index.js</string>
+        <string>BUN_PATH_HERE</string>
+        <string>run</string>
+        <string>PROJECT_PATH_HERE/src/index.ts</string>
     </array>
     <key>WorkingDirectory</key>
     <string>PROJECT_PATH_HERE</string>
@@ -185,7 +200,7 @@ Create the plist file at `~/Library/LaunchAgents/com.nanoclaw.plist`:
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin:HOME_PATH_HERE/.local/bin</string>
+        <string>/usr/local/bin:/usr/bin:/bin:HOME_PATH_HERE/.bun/bin:HOME_PATH_HERE/.local/bin</string>
         <key>HOME</key>
         <string>HOME_PATH_HERE</string>
     </dict>
@@ -199,10 +214,9 @@ Create the plist file at `~/Library/LaunchAgents/com.nanoclaw.plist`:
 
 Replace the placeholders with actual paths from the commands above.
 
-Build and start the service:
+Start the service:
 
 ```bash
-npm run build
 mkdir -p logs
 launchctl load ~/Library/LaunchAgents/com.nanoclaw.plist
 ```
@@ -235,7 +249,7 @@ The user should receive a response in WhatsApp.
 
 **WhatsApp disconnected**:
 - The service will show a macOS notification
-- Run `npm run auth` to re-authenticate
+- Run `bun run auth` to re-authenticate
 - Restart the service: `launchctl kickstart -k gui/$(id -u)/com.nanoclaw`
 
 **Unload service**:
