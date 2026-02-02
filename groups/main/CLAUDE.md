@@ -47,15 +47,17 @@ Read the CLAUDE.md files in each folder for role-specific context and workflows.
 - Team: Gavriel (founder, sales & client work), Lazer (founder, dealflow), Ali (PM)
 - Obsidian-based workflow with Kanban boards (PIPELINE.md, PORTFOLIO.md)
 
-## WhatsApp Formatting
+## Matrix Formatting
 
-Do NOT use markdown headings (##) in WhatsApp messages. Only use:
-- *Bold* (asterisks)
-- _Italic_ (underscores)
-- • Bullets (bullet points)
+Matrix supports rich text formatting:
+- **Bold** (double asterisks or HTML)
+- *Italic* (single asterisks or underscores)
+- `Code` (backticks)
 - ```Code blocks``` (triple backticks)
+- [Links](url)
+- > Quotes
 
-Keep messages clean and readable for WhatsApp.
+Keep messages clean and readable.
 
 ---
 
@@ -81,15 +83,15 @@ Key paths inside the container:
 
 ## Managing Groups
 
-### Finding Available Groups
+### Finding Available Rooms
 
-Available groups are provided in `/workspace/ipc/available_groups.json`:
+Available rooms are provided in `/workspace/ipc/available_groups.json`:
 
 ```json
 {
   "groups": [
     {
-      "jid": "120363336345536173@g.us",
+      "jid": "!roomid:matrix.org",
       "name": "Family Chat",
       "lastActivity": "2026-01-31T12:00:00.000Z",
       "isRegistered": false
@@ -99,9 +101,9 @@ Available groups are provided in `/workspace/ipc/available_groups.json`:
 }
 ```
 
-Groups are ordered by most recent activity. The list is synced from WhatsApp daily.
+Rooms are ordered by most recent activity. The list is synced from Matrix daily.
 
-If a group the user mentions isn't in the list, request a fresh sync:
+If a room the user mentions isn't in the list, request a fresh sync:
 
 ```bash
 echo '{"type": "refresh_groups"}' > /workspace/ipc/tasks/refresh_$(date +%s).json
@@ -115,19 +117,19 @@ Then wait a moment and re-read `available_groups.json`.
 sqlite3 /workspace/project/store/messages.db "
   SELECT jid, name, last_message_time
   FROM chats
-  WHERE jid LIKE '%@g.us' AND jid != '__group_sync__'
+  WHERE jid LIKE '!%' AND jid != '__group_sync__'
   ORDER BY last_message_time DESC
   LIMIT 10;
 "
 ```
 
-### Registered Groups Config
+### Registered Rooms Config
 
-Groups are registered in `/workspace/project/data/registered_groups.json`:
+Rooms are registered in `/workspace/project/data/registered_groups.json`:
 
 ```json
 {
-  "1234567890-1234567890@g.us": {
+  "!roomid:matrix.org": {
     "name": "Family Chat",
     "folder": "family-chat",
     "trigger": "@Andy",
@@ -137,33 +139,33 @@ Groups are registered in `/workspace/project/data/registered_groups.json`:
 ```
 
 Fields:
-- **Key**: The WhatsApp JID (unique identifier for the chat)
-- **name**: Display name for the group
-- **folder**: Folder name under `groups/` for this group's files and memory
+- **Key**: The Matrix room ID (e.g., `!abc123:matrix.org`)
+- **name**: Display name for the room
+- **folder**: Folder name under `groups/` for this room's files and memory
 - **trigger**: The trigger word (usually same as global, but could differ)
 - **added_at**: ISO timestamp when registered
 
-### Adding a Group
+### Adding a Room
 
-1. Query the database to find the group's JID
+1. Query the database to find the room's ID
 2. Read `/workspace/project/data/registered_groups.json`
-3. Add the new group entry with `containerConfig` if needed
+3. Add the new room entry with `containerConfig` if needed
 4. Write the updated JSON back
 5. Create the group folder: `/workspace/project/groups/{folder-name}/`
-6. Optionally create an initial `CLAUDE.md` for the group
+6. Optionally create an initial `CLAUDE.md` for the room
 
 Example folder name conventions:
 - "Family Chat" → `family-chat`
 - "Work Team" → `work-team`
 - Use lowercase, hyphens instead of spaces
 
-#### Adding Additional Directories for a Group
+#### Adding Additional Directories for a Room
 
-Groups can have extra directories mounted. Add `containerConfig` to their entry:
+Rooms can have extra directories mounted. Add `containerConfig` to their entry:
 
 ```json
 {
-  "1234567890@g.us": {
+  "!roomid:matrix.org": {
     "name": "Dev Team",
     "folder": "dev-team",
     "trigger": "@Andy",
@@ -171,7 +173,7 @@ Groups can have extra directories mounted. Add `containerConfig` to their entry:
     "containerConfig": {
       "additionalMounts": [
         {
-          "hostPath": "/Users/gavriel/projects/webapp",
+          "hostPath": "/home/user/projects/webapp",
           "containerPath": "webapp",
           "readonly": false
         }
@@ -183,14 +185,14 @@ Groups can have extra directories mounted. Add `containerConfig` to their entry:
 
 The directory will appear at `/workspace/extra/webapp` in that group's container.
 
-### Removing a Group
+### Removing a Room
 
 1. Read `/workspace/project/data/registered_groups.json`
-2. Remove the entry for that group
+2. Remove the entry for that room
 3. Write the updated JSON back
 4. The group folder and its files remain (don't delete them)
 
-### Listing Groups
+### Listing Rooms
 
 Read `/workspace/project/data/registered_groups.json` and format it nicely.
 

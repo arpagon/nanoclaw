@@ -4,18 +4,21 @@ Personal Claude assistant. See [README.md](README.md) for philosophy and setup. 
 
 ## Quick Context
 
-Single Node.js process that connects to WhatsApp, routes messages to Claude Agent SDK running in Apple Container (Linux VMs). Each group has isolated filesystem and memory.
+Single Node.js process that connects to Matrix, routes messages to Claude Agent SDK running in Apple Container (Linux VMs). Each room has isolated filesystem and memory.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/index.ts` | Main app: WhatsApp connection, message routing, IPC |
+| `src/index.ts` | Main app: Matrix connection, message routing, IPC |
+| `src/matrix-client.ts` | Matrix client wrapper (connect, send, typing) |
+| `src/matrix-monitor.ts` | Matrix event handler for incoming messages |
+| `src/matrix-types.ts` | Type definitions for Matrix config/messages |
 | `src/config.ts` | Trigger pattern, paths, intervals |
 | `src/container-runner.ts` | Spawns agent containers with mounts |
 | `src/task-scheduler.ts` | Runs scheduled tasks |
 | `src/db.ts` | SQLite operations |
-| `groups/{name}/CLAUDE.md` | Per-group memory (isolated) |
+| `groups/{name}/CLAUDE.md` | Per-room memory (isolated) |
 
 ## Skills
 

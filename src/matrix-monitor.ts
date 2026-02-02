@@ -1,0 +1,97 @@
+/**
+ * Matrix Monitor Module for NanoClaw
+ * Handles incoming Matrix events and routes them to the message handler
+ */
+
+import pino from 'pino';
+import {
+  getMatrixClient,
+  getMatrixConfig,
+} from './matrix-client.js';
+import { ASSISTANT_NAME, TRIGGER_PATTERN, MAIN_GROUP_FOLDER } from './config.js';
+import type { MatrixMessage, MatrixRoomConfig } from './matrix-types.js';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: { target: 'pino-pretty', options: { colorize: true } }
+});
+
+type MessageHandler = (message: MatrixMessage, roomConfig: MatrixRoomConfig | null, isMain: boolean) => Promise<void>;
+
+export function startMatrixMonitor(onMessage: MessageHandler): void {
+  const client = getMatrixClient();
+  const config = getMatrixConfig();
+  
+  const buildMentionPattern = (): RegExp => {
+    const userId = config.userId;
+    const localpart = userId.split(':')[0].replace('@', '');
+    // Match @botname, @localpart, or full user ID
+    return new RegExp(`(@${ASSISTANT_NAME}|@${localpart}|${userId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i');
+  };
+  
+  const mentionPattern = buildMentionPattern();
+  
+  client.on('room.message', async (roomId: string, event: Record<string, unknown>) => {
+    // Ignore own messages
+    if (event.sender === config.userId) return;
+    
+    // Ignore non-text messages
+    const content = event.content as { msgtype?: string; body?: string; 'm.relates_to'?: { rel_type?: string; event_id?: string } } | undefined;
+    if (!content || content.msgtype !== 'm.text' || !content.body) return;
+    
+    const text = content.body.trim();
+    if (!text) return;
+    
+    // Get room config
+    const roomConfig = config.rooms?.[roomId] ?? null;
+    if (roomConfig?.enabled === false) return;
+    
+    // Determine if this is the main room
+    const isMain = roomConfig?.folder === MAIN_GROUP_FOLDER;
+    
+    // Check if we should respond
+    const requireMention = roomConfig?.requireMention ?? config.requireMention ?? !isMain;
+    
+    if (requireMention && !mentionPattern.test(text) && !TRIGGER_PATTERN.test(text)) {
+      return;
+    }
+    
+    // Get sender display name
+    let senderName = event.sender as string;
+    try {
+      const profile = await client.getUserProfile(event.sender as string);
+      senderName = (profile as { displayname?: string }).displayname || (event.sender as string);
+    } catch {
+      // Use sender ID if profile fetch fails
+    }
+    
+    // Extract thread info
+    const relatesTo = content['m.relates_to'];
+    const threadId = relatesTo?.rel_type === 'm.thread' ? relatesTo.event_id : undefined;
+    
+    const message: MatrixMessage = {
+      roomId,
+      eventId: event.event_id as string,
+      sender: event.sender as string,
+      senderName,
+      content: text,
+      timestamp: new Date((event.origin_server_ts as number) || Date.now()).toISOString(),
+      threadId,
+    };
+    
+    logger.info({ roomId, sender: senderName }, 'Processing Matrix message');
+    
+    try {
+      await onMessage(message, roomConfig, isMain);
+    } catch (err) {
+      logger.error({ err, roomId, eventId: event.event_id }, 'Error handling Matrix message');
+    }
+  });
+  
+  // Handle room invites (already handled by AutojoinRoomsMixin, but log them)
+  client.on('room.invite', (roomId: string, event: Record<string, unknown>) => {
+    logger.info({ roomId, inviter: event.sender }, 'Received room invite (auto-joining)');
+  });
+  
+  logger.info('Matrix monitor started');
+}

@@ -34,7 +34,7 @@ Then run `/setup`. Claude Code handles everything: dependencies, authentication,
 
 **AI-native.** No installation wizard; Claude Code guides setup. No monitoring dashboard; ask Claude what's happening. No debugging tools; describe the problem, Claude fixes it.
 
-**Skills over features.** Contributors shouldn't add features (e.g. support for Telegram) to the codebase. Instead, they contribute [claude code skills](https://code.claude.com/docs/en/skills) like `/add-telegram` that transform your fork. You end up with clean code that does exactly what you need.
+**Skills over features.** Contributors shouldn't add features (e.g. support for Slack) to the codebase. Instead, they contribute [claude code skills](https://code.claude.com/docs/en/skills) like `/add-slack` that transform your fork. You end up with clean code that does exactly what you need.
 
 **Best harness, best model.** This runs on Claude Agent SDK, which means you're running Claude Code directly. The harness matters. A bad harness makes even smart models seem dumb, a good harness gives them superpowers. Claude Code is (IMO) the best harness available.
 
@@ -42,9 +42,9 @@ Then run `/setup`. Claude Code handles everything: dependencies, authentication,
 
 ## What It Supports
 
-- **WhatsApp I/O** - Message Claude from your phone
-- **Isolated group context** - Each group has its own `CLAUDE.md` memory, isolated filesystem, and runs in its own container sandbox with only that filesystem mounted
-- **Main channel** - Your private channel (self-chat) for admin control; every other group is completely isolated
+- **Matrix I/O** - Message Claude from any Matrix client (Element, FluffyChat, etc.)
+- **Isolated room context** - Each room has its own `CLAUDE.md` memory, isolated filesystem, and runs in its own container sandbox with only that filesystem mounted
+- **Main channel** - Your private room for admin control; every other room is completely isolated
 - **Scheduled tasks** - Recurring jobs that run Claude and can message you back
 - **Web access** - Search and fetch content
 - **Container isolation** - Agents sandboxed in Apple Container (macOS) or Docker (macOS/Linux)
@@ -60,11 +60,11 @@ Talk to your assistant with the trigger word (default: `@Andy`):
 @Andy every Monday at 8am, compile news on AI developments from Hacker News and TechCrunch and message me a briefing
 ```
 
-From the main channel (your self-chat), you can manage groups and tasks:
+From the main channel (your admin room), you can manage rooms and tasks:
 ```
-@Andy list all scheduled tasks across groups
+@Andy list all scheduled tasks across rooms
 @Andy pause the Monday briefing task
-@Andy join the Family Chat group
+@Andy join the Family Chat room
 ```
 
 ## Customizing
@@ -84,7 +84,7 @@ The codebase is small enough that Claude can safely modify it.
 
 **Don't add features. Add skills.**
 
-If you want to add Telegram support, don't create a PR that adds Telegram alongside WhatsApp. Instead, contribute a skill file (`.claude/skills/add-telegram/SKILL.md`) that teaches Claude Code how to transform a NanoClaw installation to use Telegram.
+If you want to add Telegram support, don't create a PR that adds Telegram alongside Matrix. Instead, contribute a skill file (`.claude/skills/add-telegram/SKILL.md`) that teaches Claude Code how to transform a NanoClaw installation to use Telegram.
 
 Users then run `/add-telegram` on their fork and get clean code that does exactly what they need, not a bloated system trying to support every use case.
 
@@ -93,9 +93,10 @@ Users then run `/add-telegram` on their fork and get clean code that does exactl
 Skills we'd love to see:
 
 **Communication Channels**
-- `/add-telegram` - Add Telegram as channel. Should give the user option to replace WhatsApp or add as additional channel. Also should be possible to add it as a control channel (where it can trigger actions) or just a channel that can be used in actions triggered elsewhere
+- `/add-telegram` - Add Telegram as channel. Should give the user option to replace Matrix or add as additional channel. Also should be possible to add it as a control channel (where it can trigger actions) or just a channel that can be used in actions triggered elsewhere
 - `/add-slack` - Add Slack
 - `/add-discord` - Add Discord
+- `/add-whatsapp` - Add WhatsApp as channel
 
 **Platform Support**
 - `/setup-windows` - Windows via WSL2 + Docker
@@ -109,27 +110,30 @@ Skills we'd love to see:
 - Node.js 20+
 - [Claude Code](https://claude.ai/download)
 - [Apple Container](https://github.com/apple/container) (macOS) or [Docker](https://docker.com/products/docker-desktop) (macOS/Linux)
+- A Matrix account with access token
 
 ## Architecture
 
 ```
-WhatsApp (baileys) --> SQLite --> Polling loop --> Container (Claude Agent SDK) --> Response
+Matrix (matrix-bot-sdk) --> SQLite --> Event handler --> Container (Claude Agent SDK) --> Response
 ```
 
 Single Node.js process. Agents execute in isolated Linux containers with mounted directories. IPC via filesystem. No daemons, no queues, no complexity.
 
 Key files:
-- `src/index.ts` - Main app: WhatsApp connection, routing, IPC
+- `src/index.ts` - Main app: Matrix connection, routing, IPC
+- `src/matrix-client.ts` - Matrix client wrapper
+- `src/matrix-monitor.ts` - Matrix event handler
 - `src/container-runner.ts` - Spawns agent containers
 - `src/task-scheduler.ts` - Runs scheduled tasks
 - `src/db.ts` - SQLite operations
-- `groups/*/CLAUDE.md` - Per-group memory
+- `groups/*/CLAUDE.md` - Per-room memory
 
 ## FAQ
 
-**Why WhatsApp and not Telegram/Signal/etc?**
+**Why Matrix and not WhatsApp/Telegram/Signal/etc?**
 
-Because I use WhatsApp. Fork it and run a skill to change it. That's the whole point.
+Matrix is open, decentralized, and supports self-hosting. You can use any Matrix client (Element, FluffyChat, etc.) and even run your own homeserver. Fork it and run a skill to change it. That's the whole point.
 
 **Why Apple Container instead of Docker?**
 
