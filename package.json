@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@matrix-org/matrix-sdk-crypto-nodejs": "^0.4.0",
     "better-sqlite3": "^11.8.1",
     "cron-parser": "^5.5.0",
     "matrix-bot-sdk": "^0.7.1",

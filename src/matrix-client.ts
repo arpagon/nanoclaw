@@ -1,6 +1,6 @@
 /**
  * Matrix Client Module for NanoClaw
- * Handles Matrix connection, authentication, and message sending
+ * Handles Matrix connection, authentication, message sending, and E2EE
  */
 
 import {
@@ -8,6 +8,7 @@ import {
   SimpleFsStorageProvider,
   AutojoinRoomsMixin,
   RichRepliesPreprocessor,
+  RustSdkCryptoStorageProvider,
 } from 'matrix-bot-sdk';
 import path from 'path';
 import fs from 'fs';
@@ -62,11 +63,21 @@ export async function initMatrixClient(): Promise<MatrixClient> {
   
   const storage = new SimpleFsStorageProvider(path.join(storageDir, 'bot.json'));
   
-  // Create client
+  // Setup E2EE crypto storage if encryption is enabled
+  let cryptoStore: RustSdkCryptoStorageProvider | undefined;
+  if (config.encryption) {
+    const cryptoDir = path.join(storageDir, 'crypto');
+    fs.mkdirSync(cryptoDir, { recursive: true });
+    cryptoStore = new RustSdkCryptoStorageProvider(cryptoDir);
+    logger.info({ cryptoDir }, 'E2EE crypto storage initialized');
+  }
+  
+  // Create client with optional crypto store
   client = new MatrixClient(
     config.homeserver,
     config.accessToken,
-    storage
+    storage,
+    cryptoStore
   );
   
   // Auto-join rooms when invited
@@ -75,7 +86,11 @@ export async function initMatrixClient(): Promise<MatrixClient> {
   // Process reply fallbacks
   client.addPreprocessor(new RichRepliesPreprocessor());
   
-  logger.info({ homeserver: config.homeserver, userId: config.userId }, 'Matrix client initialized');
+  logger.info({ 
+    homeserver: config.homeserver, 
+    userId: config.userId,
+    encryption: config.encryption ?? false
+  }, 'Matrix client initialized');
   
   return client;
 }
@@ -110,6 +125,7 @@ export async function sendMatrixMessage(roomId: string, text: string, threadId?:
     };
   }
   
+  // sendMessage auto-encrypts if room is encrypted and crypto is enabled
   const eventId = await matrixClient.sendMessage(roomId, content);
   logger.info({ roomId, eventId, length: text.length }, 'Matrix message sent');
   return eventId;

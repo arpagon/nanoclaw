@@ -256,6 +256,9 @@ async function main(): Promise<void> {
         }
       }
     })) {
+      // Debug: log all messages
+      log(`Message: type=${message.type}, subtype=${'subtype' in message ? message.subtype : 'N/A'}, hasResult=${'result' in message}`);
+      
       if (message.type === 'system' && message.subtype === 'init') {
         newSessionId = message.session_id;
         log(`Session initialized: ${newSessionId}`);
@@ -263,6 +266,22 @@ async function main(): Promise<void> {
 
       if ('result' in message && message.result) {
         result = message.result as string;
+        log(`Got result: ${result?.substring(0, 100)}...`);
+      }
+      
+      // Also check for assistant messages with text content
+      if (message.type === 'assistant' && 'message' in message) {
+        const assistantMsg = message.message as { content?: Array<{ type: string; text?: string }> };
+        if (assistantMsg.content) {
+          const textContent = assistantMsg.content
+            .filter(c => c.type === 'text')
+            .map(c => c.text)
+            .join('');
+          if (textContent && !result) {
+            result = textContent;
+            log(`Got assistant text: ${textContent.substring(0, 100)}...`);
+          }
+        }
       }
     }
 

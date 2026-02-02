@@ -32,12 +32,17 @@ export function startMatrixMonitor(onMessage: MessageHandler): void {
   const mentionPattern = buildMentionPattern();
   
   client.on('room.message', async (roomId: string, event: Record<string, unknown>) => {
+    logger.debug({ roomId, sender: event.sender, type: event.type }, 'Received room.message event');
+    
     // Ignore own messages
     if (event.sender === config.userId) return;
     
     // Ignore non-text messages
     const content = event.content as { msgtype?: string; body?: string; 'm.relates_to'?: { rel_type?: string; event_id?: string } } | undefined;
-    if (!content || content.msgtype !== 'm.text' || !content.body) return;
+    if (!content || content.msgtype !== 'm.text' || !content.body) {
+      logger.debug({ roomId, msgtype: content?.msgtype }, 'Ignoring non-text message');
+      return;
+    }
     
     const text = content.body.trim();
     if (!text) return;
@@ -49,10 +54,22 @@ export function startMatrixMonitor(onMessage: MessageHandler): void {
     // Determine if this is the main room
     const isMain = roomConfig?.folder === MAIN_GROUP_FOLDER;
     
-    // Check if we should respond
-    const requireMention = roomConfig?.requireMention ?? config.requireMention ?? !isMain;
+    // Check if this is a DM (direct message) - DMs don't require mention
+    let isDM = false;
+    try {
+      const members = await client.getJoinedRoomMembers(roomId);
+      isDM = members.length <= 2;
+    } catch {
+      // If we can't get members, assume it's not a DM
+    }
+    
+    // Check if we should respond: DMs always respond, others check requireMention
+    const requireMention = isDM ? false : (roomConfig?.requireMention ?? config.requireMention ?? !isMain);
+    
+    logger.debug({ roomId, text: text.substring(0, 50), isDM, requireMention, isMain }, 'Message check');
     
     if (requireMention && !mentionPattern.test(text) && !TRIGGER_PATTERN.test(text)) {
+      logger.debug({ roomId }, 'Message ignored - no trigger/mention');
       return;
     }
     
