@@ -228,7 +228,7 @@ async function processMatrixMessage(
   if (response) {
     lastAgentTimestamp[message.roomId] = message.timestamp;
     saveState();
-    await sendMatrixMessage(message.roomId, `${ASSISTANT_NAME}: ${response}`, message.threadId);
+    await sendMatrixMessage(message.roomId, response, message.threadId);
   }
 }
 
@@ -322,7 +322,7 @@ function startIpcWatcher(): void {
                 // Authorization: verify this group can send to this chatJid
                 const targetGroup = registeredGroups[data.chatJid];
                 if (isMain || (targetGroup && targetGroup.folder === sourceGroup)) {
-                  await sendMessage(data.chatJid, `${ASSISTANT_NAME}: ${data.text}`);
+                  await sendMessage(data.chatJid, data.text);
                   logger.info({ chatJid: data.chatJid, sourceGroup }, 'IPC message sent');
                 } else {
                   logger.warn({ chatJid: data.chatJid, sourceGroup }, 'Unauthorized IPC message attempt blocked');
