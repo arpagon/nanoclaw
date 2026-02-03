@@ -231,6 +231,13 @@ async function main(): Promise<void> {
     prompt = `[SCHEDULED TASK - You are running automatically, not in response to a user message. Use mcp__nanoclaw__send_message if needed to communicate with the user.]\n\n${input.prompt}`;
   }
 
+  // Prepend identity if exists (defines personality)
+  const identityPath = '/workspace/group/IDENTITY.md';
+  if (fs.existsSync(identityPath)) {
+    const identity = fs.readFileSync(identityPath, 'utf-8');
+    prompt = `${identity}\n\n---\n\n${prompt}`;
+  }
+
   try {
     log('Starting agent...');
 

@@ -32,6 +32,14 @@ import {
   getMatrixConfig,
 } from './matrix-client.js';
 import { startMatrixMonitor } from './matrix-monitor.js';
+import {
+  isPaired,
+  isMainRoom,
+  getOwner,
+  createPairingRequest,
+  buildPairingMessage,
+  getPendingPairing,
+} from './pairing.js';
 import type { MatrixMessage, MatrixRoomConfig } from './matrix-types.js';
 
 const logger = pino({
@@ -140,6 +148,32 @@ async function processMatrixMessage(
   roomConfig: MatrixRoomConfig | null,
   isMain: boolean
 ): Promise<void> {
+  // Handle pairing flow if not paired yet
+  if (!isPaired()) {
+    // Check if there's already a pending pairing request
+    const pending = getPendingPairing();
+    
+    if (pending) {
+      // Already have a pending request, remind them
+      logger.info({ sender: message.sender, roomId: message.roomId }, 'Pairing already pending, sending reminder');
+      await sendMatrixMessage(
+        message.roomId,
+        buildPairingMessage(pending.code),
+        message.threadId
+      );
+    } else {
+      // Create new pairing request
+      const code = createPairingRequest(message.sender, message.roomId, message.senderName);
+      logger.info({ sender: message.sender, roomId: message.roomId, code }, 'Created pairing request');
+      await sendMatrixMessage(
+        message.roomId,
+        buildPairingMessage(code),
+        message.threadId
+      );
+    }
+    return;
+  }
+
   const folder = roomConfig?.folder ?? (isMain ? MAIN_GROUP_FOLDER : `matrix-${message.roomId.replace(/[^a-zA-Z0-9]/g, '_')}`);
 
   // Build group object for container runner
@@ -199,7 +233,7 @@ async function processMatrixMessage(
 }
 
 async function runAgent(group: RegisteredGroup, prompt: string, chatId: string): Promise<string | null> {
-  const isMain = group.folder === MAIN_GROUP_FOLDER;
+  const isMain = isMainRoom(chatId);
   const sessionId = sessions[group.folder];
 
   // Update tasks snapshot for container to read (filtered by group)

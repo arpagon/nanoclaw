@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
+    "pair": "tsx src/pair.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -8,7 +8,8 @@ import {
   getMatrixClient,
   getMatrixConfig,
 } from './matrix-client.js';
-import { ASSISTANT_NAME, TRIGGER_PATTERN, MAIN_GROUP_FOLDER } from './config.js';
+import { ASSISTANT_NAME, TRIGGER_PATTERN } from './config.js';
+import { isPaired, isMainRoom } from './pairing.js';
 import type { MatrixMessage, MatrixRoomConfig } from './matrix-types.js';
 
 const logger = pino({
@@ -51,8 +52,8 @@ export function startMatrixMonitor(onMessage: MessageHandler): void {
     const roomConfig = config.rooms?.[roomId] ?? null;
     if (roomConfig?.enabled === false) return;
     
-    // Determine if this is the main room
-    const isMain = roomConfig?.folder === MAIN_GROUP_FOLDER;
+    // Determine if this is the main room (owner's room after pairing)
+    const isMain = isPaired() && isMainRoom(roomId);
     
     // Check if this is a DM (direct message) - DMs don't require mention
     let isDM = false;
