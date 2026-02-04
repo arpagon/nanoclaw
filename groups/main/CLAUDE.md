@@ -1,6 +1,8 @@
-# Andy
+# Identity
 
-You are Andy, a personal assistant. You help with tasks, answer questions, and can schedule reminders.
+**IMPORTANT**: Read `IDENTITY.md` first - it defines who you are, your name, personality, and how you communicate.
+
+If `IDENTITY.md` doesn't exist, you are a generic assistant. Ask the user to set up your identity.
 
 ## What You Can Do
 
@@ -116,7 +118,7 @@ Rooms are registered in `/workspace/project/data/registered_groups.json`:
   "!roomid:matrix.org": {
     "name": "Family Chat",
     "folder": "family-chat",
-    "trigger": "@Andy",
+    "trigger": "@Assistant",
     "added_at": "2024-01-31T12:00:00.000Z"
   }
 }
@@ -152,7 +154,7 @@ Rooms can have extra directories mounted. Add `containerConfig` to their entry:
   "!roomid:matrix.org": {
     "name": "Dev Team",
     "folder": "dev-team",
-    "trigger": "@Andy",
+    "trigger": "@Assistant",
     "added_at": "2026-01-31T12:00:00Z",
     "containerConfig": {
       "additionalMounts": [

@@ -52,19 +52,19 @@ Then run `/setup`. Claude Code handles everything: dependencies, authentication,
 
 ## Usage
 
-Talk to your assistant with the trigger word (default: `@Andy`):
+Talk to your assistant with the trigger word (configurable via `ASSISTANT_NAME` env var):
 
 ```
-@Andy send an overview of the sales pipeline every weekday morning at 9am (has access to my Obsidian vault folder)
-@Andy review the git history for the past week each Friday and update the README if there's drift
-@Andy every Monday at 8am, compile news on AI developments from Hacker News and TechCrunch and message me a briefing
+@Assistant send an overview of the sales pipeline every weekday morning at 9am (has access to my Obsidian vault folder)
+@Assistant review the git history for the past week each Friday and update the README if there's drift
+@Assistant every Monday at 8am, compile news on AI developments from Hacker News and TechCrunch and message me a briefing
 ```
 
 From the main channel (your admin room), you can manage rooms and tasks:
 ```
-@Andy list all scheduled tasks across rooms
-@Andy pause the Monday briefing task
-@Andy join the Family Chat room
+@Assistant list all scheduled tasks across rooms
+@Assistant pause the Monday briefing task
+@Assistant join the Family Chat room
 ```
 
 ## Customizing

@@ -94,16 +94,16 @@ function buildVolumeMounts(group: RegisteredGroup, isMain: boolean): VolumeMount
         readonly: true
       });
     }
+  }
 
-    // Identity file (personality, not in git)
-    const identityFile = path.join(DATA_DIR, 'IDENTITY.md');
-    if (fs.existsSync(identityFile)) {
-      mounts.push({
-        hostPath: identityFile,
-        containerPath: '/workspace/group/IDENTITY.md',
-        readonly: true
-      });
-    }
+  // Identity file (personality, not in git) - mounted for ALL groups
+  const identityFile = path.join(DATA_DIR, 'IDENTITY.md');
+  if (fs.existsSync(identityFile)) {
+    mounts.push({
+      hostPath: identityFile,
+      containerPath: '/workspace/group/IDENTITY.md',
+      readonly: true
+    });
   }
 
   // Per-group Claude sessions directory (isolated from other groups)

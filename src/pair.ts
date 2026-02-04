@@ -9,7 +9,7 @@
 
 import { approvePairing, getPendingPairing, getOwner } from './pairing.js';
 import { loadJson, saveJson } from './utils.js';
-import { DATA_DIR, MAIN_GROUP_FOLDER } from './config.js';
+import { DATA_DIR, MAIN_GROUP_FOLDER, ASSISTANT_NAME } from './config.js';
 import { RegisteredGroup } from './types.js';
 import fs from 'fs';
 import path from 'path';
@@ -75,7 +75,7 @@ const groups = loadJson<Record<string, RegisteredGroup>>(groupsPath, {});
 groups[owner.mainRoomId] = {
   name: 'main',
   folder: MAIN_GROUP_FOLDER,
-  trigger: '@Andy',
+  trigger: `@${ASSISTANT_NAME}`,
   added_at: new Date().toISOString(),
 };
 

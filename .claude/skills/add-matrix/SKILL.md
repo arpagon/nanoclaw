@@ -748,12 +748,12 @@ npm run dev
 
 Test WhatsApp:
 ```
-@Andy hello from WhatsApp
+@Assistant hello from WhatsApp
 ```
 
 Test Matrix:
 ```
-@Andy hello from Matrix
+@Assistant hello from Matrix
 ```
 
 ---
